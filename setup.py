@@ -7,5 +7,5 @@ setup(name="PopulationLM",
       platforms=["any"],  # or more specific, e.g. "win32", "cygwin", "osx"
       license="BSD",
       url="https://github.com/JesseTNRoberts/PopulationLM/",
-      packages=find_packages(),
+      packages=['PopulationLM'],
       )
