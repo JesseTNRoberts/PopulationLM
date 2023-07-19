@@ -1,11 +1,11 @@
 from setuptools import find_packages, setup
-setup(name="foo",
+setup(name="PopulationLM",
       version="0.1",
-      description="A foo utility",
-      author="Ewen Cheslack-Postava",
-      author_email='me@ewencp.org',
+      description="A psycholinguistic language model experimental utility",
+      author="Jesse Roberts",
+      author_email='Jesse.roberts@vanderbilt.edu',
       platforms=["any"],  # or more specific, e.g. "win32", "cygwin", "osx"
       license="BSD",
-      url="http://github.com/ewencp/foo",
+      url="https://github.com/JesseTNRoberts/PopulationLM/",
       packages=find_packages(),
       )
