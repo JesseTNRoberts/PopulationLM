@@ -111,7 +111,7 @@ MC_DROPOUT_SUBSTITUTES = {
     "StaticDropout": StaticDropoutMC,
 }
 
-class PopulationLM():
+class DropoutUtils():
     @classmethod
     def _convert_to_mc_dropout(
         cls, model: torch.nn.Module, substitution_dict: Dict[str, torch.nn.Module] = None
@@ -200,13 +200,13 @@ def generate_dropout_population(model, call_to_model_lambda, committee_size = 20
   identities = []
   for index in range(committee_size):
     call_to_model_lambda()
-    identities.append(PopulationLM.get_static_dropout_identity(model))
-    PopulationLM.reset_static_mc_dropout(model)
+    identities.append(DropoutUtils.get_static_dropout_identity(model))
+    DropoutUtils.reset_static_mc_dropout(model)
   return identities
 
 def call_function_with_population(model, identities, function_to_call):
   for identity in identities:
-    PopulationLM.set_static_dropout_identity(model,identity)
+    DropoutUtils.set_static_dropout_identity(model,identity)
     yield function_to_call()
 
 
@@ -228,8 +228,8 @@ if __name__ == "__main__":
   tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
   model = AutoModelForMaskedLM.from_pretrained("distilbert-base-uncased", output_attentions=False)
 
-  PopulationLM.convert_dropouts(model)
-  PopulationLM.activate_mc_dropout(model, activate=True, random=0.1)
+  DropoutUtils.convert_dropouts(model)
+  DropoutUtils.activate_mc_dropout(model, activate=True, random=0.1)
 
   # some example text to predict the missing token
   input = tokenizer("A sparrow: [MASK]", return_tensors="pt", add_special_tokens=False)#, padding='max_length', max_length=42)
