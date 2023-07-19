@@ -7,7 +7,10 @@ import PopulationLM as pop
 from minicons import scorer
 
 committee_size = 5
+
+# uncomment the desired model
 lm = scorer.IncrementalLMScorer('gpt2', 'cpu')
+#lm = scorer.MaskedLMScorer('bert-base-uncased','cpu')
 
 prefixes = ['A robin is a', 'A penguin is a', 'A tiger really typical one of']
 queries = ['bird.', 'bird.', 'mammal.']
