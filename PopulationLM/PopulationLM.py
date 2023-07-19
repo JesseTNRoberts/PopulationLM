@@ -211,8 +211,8 @@ def call_function_with_population(model, identities, function_to_call):
 
 
 if __name__ == "__main__":
-  !pip install transformers
-  !pip install sentencepiece
+  #!pip install transformers
+  #!pip install sentencepiece
   import logging
   import copy
   from transformers import DistilBertTokenizerFast, AutoTokenizer, AutoModelForMaskedLM
