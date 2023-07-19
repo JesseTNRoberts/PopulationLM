@@ -1,6 +1,8 @@
+from transformers.modeling_utils import Identity
 import torch
 from collections import Counter
 from typing import Iterable, Union, Dict
+from functools import partial
 
 
 class DropoutMC(torch.nn.Module):
@@ -27,12 +29,15 @@ class StaticDropoutMC(DropoutMC):
     def __init__(self, p: float, activate=False, batch_first: bool = True):
         super().__init__(p, activate)
         self.batch_first = batch_first
-        self.mask = None
+        self.identity = None
+
+    def reset_identity(self):
+      self.identity = None
 
     def forward(self, x: torch.Tensor):
         x = x.clone()
 
-        if self.mask is None:
+        if self.identity is None:
           size = list(x.size())
           # create mask of appropriate size and broadcast it to the 
           if not self.batch_first:
@@ -43,14 +48,14 @@ class StaticDropoutMC(DropoutMC):
             # if batch is the first element then the second element is the sequence length.
             size[1] = 1
             m = x.data.new(torch.Size(size)).bernoulli_(1 - self.p)
-          self.mask = m.div_(1 - self.p)
+          self.identity = m.div_(1 - self.p)
         
-        self.mask = self.mask.expand_as(x)
+        identity_expanded = self.identity.expand_as(x)
 
         if not self.activate or not self.p:
             return x
         
-        return self.mask * x
+        return identity_expanded * x
 
 
 class LockedDropoutMC(DropoutMC):
@@ -143,6 +148,34 @@ class PopulationLM():
                 )
 
     @classmethod
+    def reset_static_mc_dropout(
+        cls, model: torch.nn.Module
+    ):
+        for layer in model.children():
+            if isinstance(layer, StaticDropoutMC):
+                layer.reset_identity()
+            else:
+                cls.reset_static_mc_dropout(model=layer)
+
+    @classmethod
+    def get_static_dropout_identity(
+        cls, model: torch.nn.Module
+    ):
+        identity = {}
+        for name, layer in model.named_modules():
+            if isinstance(layer, StaticDropoutMC):
+                identity[name] = layer.identity
+        return identity
+        
+    @classmethod
+    def set_static_dropout_identity(
+        cls, model: torch.nn.Module, identity
+    ):
+        for name, layer in model.named_modules():
+            if isinstance(layer, StaticDropoutMC):
+                layer.identity = identity[name]
+
+    @classmethod
     def convert_dropouts(cls, model, static=True):
       #if static is true then the model will not change dropouts between generations
       if static:
@@ -163,6 +196,20 @@ class PopulationLM():
       # call the conversion method on the model
       cls._convert_to_mc_dropout(model, replacement_dict)
 
+def generate_dropout_population(model, call_to_model_lambda, committee_size = 20):
+  identities = []
+  for index in range(committee_size):
+    call_to_model_lambda()
+    identities.append(PopulationLM.get_static_dropout_identity(model))
+    PopulationLM.reset_static_mc_dropout(model)
+  return identities
+
+def call_function_with_population(model, identities, function_to_call):
+  for identity in identities:
+    PopulationLM.set_static_dropout_identity(model,identity)
+    yield function_to_call()
+
+
 if __name__ == "__main__":
   !pip install transformers
   !pip install sentencepiece
@@ -178,32 +225,20 @@ if __name__ == "__main__":
   # the number of needed individuals is not well understood at this point
   # needs more research
   committee_size = 20
-
-
-
   tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
   model = AutoModelForMaskedLM.from_pretrained("distilbert-base-uncased", output_attentions=False)
 
-  committee = [copy.deepcopy(model) for i in range(committee_size)]
-
-  log.info("******Perform stochastic inference...*******")
-
-  log.info("Model before dropout replacement:")
-  log.info(str(model))
   PopulationLM.convert_dropouts(model)
-  log.info("Model after dropout replacement:")
-  log.info(str(model))
-
   PopulationLM.activate_mc_dropout(model, activate=True, random=0.1)
 
-  # convert the committee to use mc dropout with static set to true(default)
-  for m in committee:
-    PopulationLM.convert_dropouts(m)
-    PopulationLM.activate_mc_dropout(m, activate=True, random=0.1)
-
   # some example text to predict the missing token
-  input = tokenizer("A sparrow: [MASK]", return_tensors="pt", add_special_tokens=False)
+  input = tokenizer("A sparrow: [MASK]", return_tensors="pt", add_special_tokens=False)#, padding='max_length', max_length=42)
   input_ids = input.input_ids
+
+  call_me = lambda : model(input_ids)
+  population = generate_dropout_population(model, call_me, committee_size=committee_size)
+
+  committee_outs = [item for item in call_function_with_population(model, population, call_me)]
 
   # find the index to predict (the location of the mask token)
   predict_index = 0
@@ -211,8 +246,6 @@ if __name__ == "__main__":
     if item == tokenizer.mask_token_id:
       predict_index = index
 
-  
-  committee_outs = [m(input_ids) for m in committee]
 
   print('using static dropout')
   for out in committee_outs:
@@ -224,6 +257,7 @@ if __name__ == "__main__":
   cats= ['bird', 'vertebrate', 'animal']
   cat_ids = [tokenizer(cat, return_tensors="pt", add_special_tokens=False).input_ids[0] for cat in cats]
 
+  # get the first token for the category names
   cat_ids = [id[0] for id in cat_ids]
 
   logit_cat = {}
@@ -249,7 +283,3 @@ if __name__ == "__main__":
     print('mean')
     print(mean/len(logit_cat[cat]))
     print('-----')
-"""
-Adapted from work in:
-@inproceedings{shelmanov-etal-2021-certain, title = "How Certain is Your {T}ransformer?", author = "Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim", booktitle = "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume", month = apr, year = "2021", address = "Online", publisher = "Association for Computational Linguistics", url = "https://www.aclweb.org/anthology/2021.eacl-main.157", pages = "1833--1840", abstract = "In this work, we consider the problem of uncertainty estimation for Transformer-based models. We investigate the applicability of uncertainty estimates based on dropout usage at the inference stage (Monte Carlo dropout). The series of experiments on natural language understanding tasks shows that the resulting uncertainty estimates improve the quality of detection of error-prone instances. Special attention is paid to the construction of computationally inexpensive estimates via Monte Carlo dropout and Determinantal Point Processes.", }
-"""
