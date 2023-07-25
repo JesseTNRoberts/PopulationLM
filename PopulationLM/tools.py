@@ -198,6 +198,8 @@ class DropoutUtils():
 
 def generate_dropout_population(model, call_to_model_lambda, committee_size = 20):
   identities = []
+  # this line permits a population object to be reused without explicitly building a new object
+  DropoutUtils.reset_static_mc_dropout(model)
   for index in range(committee_size):
     call_to_model_lambda()
     identities.append(DropoutUtils.get_static_dropout_identity(model))
