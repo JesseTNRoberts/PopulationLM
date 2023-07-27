@@ -161,11 +161,13 @@ class DropoutUtils():
     def get_static_dropout_identity(
         cls, model: torch.nn.Module
     ):
+        probs = {}
         identity = {}
         for name, layer in model.named_modules():
             if isinstance(layer, StaticDropoutMC):
                 identity[name] = layer.identity
-        return identity
+                probs[name] = layer.p
+        return probs, identity
         
     @classmethod
     def set_static_dropout_identity(
@@ -198,12 +200,23 @@ class DropoutUtils():
 
 def generate_dropout_population(model, call_to_model_lambda, committee_size = 20):
   identities = []
-  # this line permits a population object to be reused without explicitly building a new object
   DropoutUtils.reset_static_mc_dropout(model)
-  for index in range(committee_size):
-    call_to_model_lambda()
-    identities.append(DropoutUtils.get_static_dropout_identity(model))
-    DropoutUtils.reset_static_mc_dropout(model)
+  call_to_model_lambda()
+  
+  probs, initial_identity = DropoutUtils.get_static_dropout_identity(model)
+  identities.append(initial_identity)
+
+  for index in range(committee_size-1):
+    new_identity = {}
+
+    for layer in initial_identity.keys():
+      p = probs[layer]
+      tens = initial_identity[layer]
+      new = tens.data.new(torch.Size(tens.shape)).bernoulli_(1 - p).div_(1 - p)
+      new_identity[layer] = new
+
+    identities.append(new_identity)
+    
   return identities
 
 def call_function_with_population(model, identities, function_to_call):
