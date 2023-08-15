@@ -1,3 +1,16 @@
+"""
+Adapted and Extended from:
+
+@inproceedings{shelmanov2021certain,
+  title={How certain is your Transformer?},
+  author={Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim},
+  booktitle={Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume},
+  pages={1833--1840},
+  year={2021}
+}
+"""
+
+
 from transformers.modeling_utils import Identity
 import torch
 from collections import Counter
