@@ -1,5 +1,15 @@
 Set of utilities to approximate a population of individuals (language models) on which psycholinguistic analysis may be meaningfully conducted.
 
+Adapted and Extended from:
+
+@inproceedings{shelmanov2021certain,
+  title={How certain is your Transformer?},
+  author={Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim},
+  booktitle={Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume},
+  pages={1833--1840},
+  year={2021}
+}
+
 ## Example - Creating a population and scoring with Minicons
 
 ```python
