@@ -165,7 +165,7 @@ class DropoutUtils():
         cls, model: torch.nn.Module
     ):
         for layer in model.children():
-            if isinstance(layer, stratifiedDropoutMC):
+            if isinstance(layer, StratifiedDropoutMC):
                 layer.reset_identity()
             else:
                 cls.reset_stratified_mc_dropout(model=layer)
@@ -177,7 +177,7 @@ class DropoutUtils():
         probs = {}
         identity = {}
         for name, layer in model.named_modules():
-            if isinstance(layer, stratifiedDropoutMC):
+            if isinstance(layer, StratifiedDropoutMC):
                 identity[name] = layer.identity
                 probs[name] = layer.p
         return probs, identity
