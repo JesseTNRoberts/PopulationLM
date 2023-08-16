@@ -31,13 +31,13 @@ class DropoutMC(torch.nn.Module):
         )
 
 
-class StaticDropoutMC(DropoutMC):
+class StratifiedDropoutMC(DropoutMC):
     """ 
     This method changes the network to have a random dropout applied and 
-    then held static after the dropout mask is created on first call.
+    then held stratified after the dropout mask is created on first call.
 
     Useful for creating statistical populations which approximate ensembles of models 
-    in which the individuals are static once generated.
+    in which the individuals are stratified once generated.
     """
     def __init__(self, p: float, activate=False, batch_first: bool = True):
         super().__init__(p, activate)
@@ -121,7 +121,7 @@ MC_DROPOUT_SUBSTITUTES = {
     "Dropout": DropoutMC,
     "LockedDropout": LockedDropoutMC,
     "WordDropout": WordDropoutMC,
-    "StaticDropout": StaticDropoutMC,
+    "StratifiedDropout": stratifiedDropoutMC,
 }
 
 class DropoutUtils():
@@ -161,40 +161,40 @@ class DropoutUtils():
                 )
 
     @classmethod
-    def reset_static_mc_dropout(
+    def reset_stratified_mc_dropout(
         cls, model: torch.nn.Module
     ):
         for layer in model.children():
-            if isinstance(layer, StaticDropoutMC):
+            if isinstance(layer, stratifiedDropoutMC):
                 layer.reset_identity()
             else:
-                cls.reset_static_mc_dropout(model=layer)
+                cls.reset_stratified_mc_dropout(model=layer)
 
     @classmethod
-    def get_static_dropout_identity(
+    def get_stratified_dropout_identity(
         cls, model: torch.nn.Module
     ):
         probs = {}
         identity = {}
         for name, layer in model.named_modules():
-            if isinstance(layer, StaticDropoutMC):
+            if isinstance(layer, stratifiedDropoutMC):
                 identity[name] = layer.identity
                 probs[name] = layer.p
         return probs, identity
         
     @classmethod
-    def set_static_dropout_identity(
+    def set_stratified_dropout_identity(
         cls, model: torch.nn.Module, identity
     ):
         for name, layer in model.named_modules():
-            if isinstance(layer, StaticDropoutMC):
+            if isinstance(layer, StratifiedDropoutMC):
                 layer.identity = identity[name]
 
     @classmethod
-    def convert_dropouts(cls, model, static=True):
-      #if static is true then the model will not change dropouts between generations
-      if static:
-        dropout_ctor = lambda p, activate: StaticDropoutMC(
+    def convert_dropouts(cls, model, stratified=True):
+      #if stratified is true then the model will not change dropouts between generations
+      if stratified:
+        dropout_ctor = lambda p, activate: StratifiedDropoutMC(
                   p=0.1, activate=False
               )
       else:
@@ -213,10 +213,10 @@ class DropoutUtils():
 
 def generate_dropout_population(model, call_to_model_lambda, committee_size = 20):
   identities = []
-  DropoutUtils.reset_static_mc_dropout(model)
+  DropoutUtils.reset_stratified_mc_dropout(model)
   call_to_model_lambda()
   
-  probs, initial_identity = DropoutUtils.get_static_dropout_identity(model)
+  probs, initial_identity = DropoutUtils.get_stratified_dropout_identity(model)
   identities.append(initial_identity)
 
   for index in range(committee_size-1):
@@ -234,6 +234,6 @@ def generate_dropout_population(model, call_to_model_lambda, committee_size = 20
 
 def call_function_with_population(model, identities, function_to_call):
   for identity in identities:
-    DropoutUtils.set_static_dropout_identity(model,identity)
+    DropoutUtils.set_stratified_dropout_identity(model,identity)
     yield function_to_call()
 
