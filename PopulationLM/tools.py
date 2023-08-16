@@ -121,7 +121,7 @@ MC_DROPOUT_SUBSTITUTES = {
     "Dropout": DropoutMC,
     "LockedDropout": LockedDropoutMC,
     "WordDropout": WordDropoutMC,
-    "StratifiedDropout": stratifiedDropoutMC,
+    "StratifiedDropout": StratifiedDropoutMC,
 }
 
 class DropoutUtils():
