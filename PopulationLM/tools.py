@@ -151,7 +151,7 @@ class DropoutUtils():
                     print(f"Current DO state: {layer.activate}")
                     print(f"Switching state to: {activate}")
                 layer.activate = activate
-                if activate and random:
+                if activate:
                     layer.p = random
                 if not activate:
                     layer.p = layer.p_init
