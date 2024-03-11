@@ -126,6 +126,17 @@ MC_DROPOUT_SUBSTITUTES = {
 
 class DropoutUtils():
     @classmethod
+    def add_new_dropout_layers(
+      cls, model:torch.nn.Module, add_after_layer_name='Linear' 
+    ):
+        for name, layer in model.named_children():
+            if add_after_layer_name in name:
+                new = torch.nn.Sequential(subsubsubsublayer, torch.nn.Dropout(p=0,))
+                setattr(layer, name, new)
+            else:
+                add_new_dropout_layers(model=layer)
+  
+    @classmethod
     def _convert_to_mc_dropout(
         cls, model: torch.nn.Module, substitution_dict: Dict[str, torch.nn.Module] = None
     ):
@@ -236,4 +247,5 @@ def call_function_with_population(model, identities, function_to_call):
   for identity in identities:
     DropoutUtils.set_stratified_dropout_identity(model,identity)
     yield function_to_call()
+
 
