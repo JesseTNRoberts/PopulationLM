@@ -134,7 +134,7 @@ class DropoutUtils():
                 new = torch.nn.Sequential(subsubsubsublayer, torch.nn.Dropout(p=0,))
                 setattr(layer, name, new)
             else:
-                add_new_dropout_layers(model=layer)
+                cls.add_new_dropout_layers(model=layer)
   
     @classmethod
     def _convert_to_mc_dropout(
