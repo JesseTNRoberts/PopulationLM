@@ -127,12 +127,18 @@ MC_DROPOUT_SUBSTITUTES = {
 class DropoutUtils():
     @classmethod
     def add_new_dropout_layers(
-      cls, model:torch.nn.Module, add_after_layer_name='Linear' 
+      cls, model:torch.nn.Module, add_after_layer_name='Linear', verbose=False 
     ):
         for name, layer in model.named_children():
+            if verbose:  
+              print('layer: ', layer)  
+              
             if add_after_layer_name in name:
                 new = torch.nn.Sequential(layer, torch.nn.Dropout(p=0,))
                 setattr(model, name, new)
+               
+                if verbose:
+                  print('dropout added')  
             else:
                 cls.add_new_dropout_layers(model=layer)
   
