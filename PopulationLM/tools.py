@@ -131,8 +131,8 @@ class DropoutUtils():
     ):
         for name, layer in model.named_children():
             if add_after_layer_name in name:
-                new = torch.nn.Sequential(subsubsubsublayer, torch.nn.Dropout(p=0,))
-                setattr(layer, name, new)
+                new = torch.nn.Sequential(layer, torch.nn.Dropout(p=0,))
+                setattr(model, name, new)
             else:
                 cls.add_new_dropout_layers(model=layer)
   
