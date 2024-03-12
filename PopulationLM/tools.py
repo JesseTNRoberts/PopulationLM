@@ -139,7 +139,7 @@ class DropoutUtils():
               if verbose:
                 print('layer: ', child._get_name(), 'dropout added')
           else:
-            cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, add_after_layer_names=add_after_layer_names, verbose=verbose)
+            cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, MLP_layer_names=MLP_layer_names, verbose=verbose)
   
     @classmethod
     def show_model(
