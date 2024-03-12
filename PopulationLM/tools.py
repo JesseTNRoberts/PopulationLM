@@ -126,6 +126,29 @@ MC_DROPOUT_SUBSTITUTES = {
 
 class DropoutUtils():
     @classmethod
+    def add_new_dropout_layers(
+      cls, model:torch.nn.Module, layer_name_to_replace='Linear', MLP_layer_names=['LlamaMLP', 'MistralMLP', 'MixtralBlockSparseTop2MLP', 'GemmaMLP'], verbose=False
+    ):
+        for child in model.children():
+          if child._get_name() in MLP_layer_names:
+            for name, subchild in child.named_children():
+              if subchild._get_name() == layer_name_to_replace:
+                new = torch.nn.Sequential(subchild, torch.nn.Dropout(p=0,))
+                setattr(child, name, new)
+    
+              if verbose:
+                print('layer: ', child._get_name(), 'dropout added')
+          else:
+            cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, add_after_layer_names=add_after_layer_names, verbose=verbose)
+  
+    @classmethod
+    def show_model(
+        cls, model: torch.nn.Module,
+    ):
+        print([child for child in model.children()])
+
+  
+    @classmethod
     def _convert_to_mc_dropout(
         cls, model: torch.nn.Module, substitution_dict: Dict[str, torch.nn.Module] = None
     ):
