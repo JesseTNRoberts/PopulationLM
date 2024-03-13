@@ -241,7 +241,7 @@ class DropoutUtils():
       
       if replaced_layers == 0:
         cls.show_model(model)
-        print('trying to add dropout layers...'
+        print('trying to add dropout layers...')
         cls.add_new_dropout_layers(model)
         replaced_layers = cls.convert_dropouts(model, stratified=stratified)
 
