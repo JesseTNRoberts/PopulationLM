@@ -162,7 +162,7 @@ class DropoutUtils():
                 model._modules[module_name] = substitution_dict[layer_name](
                     p=getattr(layer, proba_field_name), activate=False
                 )
-                layer_replaced_count++
+                layer_replaced_count+= 1
             else:
                 layer_replaced_count+= cls._convert_to_mc_dropout(model=layer, substitution_dict=substitution_dict)
           
