@@ -135,7 +135,10 @@ class DropoutUtils():
               if subchild._get_name() == layer_name_to_replace:
                 new = torch.nn.Sequential(subchild, torch.nn.Dropout(p=0,))
                 setattr(child, name, new)
-    
+
+                # Only add one dropout layer to each MLP
+                break
+                
               if verbose:
                 print('layer: ', child._get_name(), 'dropout added')
           else:
