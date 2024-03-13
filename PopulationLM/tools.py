@@ -152,6 +152,8 @@ class DropoutUtils():
     def _convert_to_mc_dropout(
         cls, model: torch.nn.Module, substitution_dict: Dict[str, torch.nn.Module] = None
     ):
+        layer_replaced_count= 0
+      
         for i, layer in enumerate(list(model.children())):
             proba_field_name = "dropout_rate" if "flair" in str(type(layer)) else "p"
             module_name = list(model._modules.items())[i][0]
@@ -160,8 +162,11 @@ class DropoutUtils():
                 model._modules[module_name] = substitution_dict[layer_name](
                     p=getattr(layer, proba_field_name), activate=False
                 )
+                layer_replaced_count++
             else:
-                cls._convert_to_mc_dropout(model=layer, substitution_dict=substitution_dict)
+                layer_replaced_count+= cls._convert_to_mc_dropout(model=layer, substitution_dict=substitution_dict)
+          
+        return layer_replaced_count
 
     @classmethod
     def activate_mc_dropout(
@@ -232,7 +237,19 @@ class DropoutUtils():
           }
 
       # call the conversion method on the model
-      cls._convert_to_mc_dropout(model, replacement_dict)
+      replaced_layers = cls._convert_to_mc_dropout(model, replacement_dict)
+      
+      if replaced_layers == 0:
+        cls.show_model(model)
+        print('trying to add dropout layers...'
+        cls.add_new_dropout_layers(model)
+        replaced_layers = cls.convert_dropouts(model, stratified=stratified)
+
+      if replaced_layers==0:
+        raise ValueError("The number of converted layers is zero. This is because the model has no dropout layers. Add them using add_new_dropout_layers()")
+      
+      print('replaced ', replaced_layers, ' layers.')
+      
 
 def generate_dropout_population(model, call_to_model_lambda, committee_size = 20):
   identities = []
