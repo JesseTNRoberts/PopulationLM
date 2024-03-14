@@ -127,7 +127,7 @@ MC_DROPOUT_SUBSTITUTES = {
 class DropoutUtils():
     @classmethod
     def add_new_dropout_layers(
-      cls, model:torch.nn.Module, layer_name_to_replace='Linear', MLP_layer_names=['LlamaMLP', 'MistralMLP', 'MixtralBlockSparseTop2MLP', 'GemmaMLP'], verbose=False
+      cls, model:torch.nn.Module, layer_name_to_replace='Linear', MLP_layer_names=['LlamaMLP', 'MistralMLP', 'MixtralBlockSparseTop2MLP', 'GemmaMLP', 'FalconMLP'], verbose=False
     ):
         for child in model.children():
           if child._get_name() in MLP_layer_names:
