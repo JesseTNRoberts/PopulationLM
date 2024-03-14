@@ -132,9 +132,9 @@ class DropoutUtils():
         for child in model.children():
           if child._get_name() in MLP_layer_names:
             for subchild in reversed([item for item in child.children()]):
-              if subchild._get_name() == layer_name_to_replace:
+              if subchild._get_name() in layer_name_to_replace:
                 new = torch.nn.Sequential(subchild, torch.nn.Dropout(p=0,))
-                setattr(child, subchild._get_name(), new)
+                setattr(child, subchild, new)
 
                 # Only add one dropout layer to each MLP
                 break
