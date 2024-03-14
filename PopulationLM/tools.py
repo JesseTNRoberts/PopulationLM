@@ -245,15 +245,15 @@ class DropoutUtils():
       print('replaced ', replaced_layers, ' layers.')
       
       if replaced_layers == 0:
-        cls.show_model(model)
         print('trying to add dropout layers...')
         cls.add_new_dropout_layers(model)
         replaced_layers = cls._convert_to_mc_dropout(model, replacement_dict)
 
       
-        print('replaced ', replaced_layers, ' layers.')
+      print('replaced ', replaced_layers, ' layers.')
 
       if replaced_layers==0:
+        cls.show_model(model)
         raise ValueError("The number of converted layers is zero. This is because the model has no dropout layers. Add them using add_new_dropout_layers()")
       
       
