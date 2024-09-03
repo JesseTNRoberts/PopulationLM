@@ -284,3 +284,5 @@ def call_function_with_population(model, identities, function_to_call):
     yield function_to_call()
 
 
+def generate_population_and_apply(model, function_to_call, committee_size = 20):
+   call_function_with_population(model, generate_dropout_population(model, function_to_call, committee_size), function_to_call)
