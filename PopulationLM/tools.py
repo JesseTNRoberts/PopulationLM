@@ -11,8 +11,8 @@ Adapted and Extended from:
 """
 
 
-from transformers.modeling_utils import Identity
 import torch
+from torch.nn import Identity
 from collections import Counter
 from typing import Iterable, Union, Dict
 from functools import partial
