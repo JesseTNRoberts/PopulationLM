@@ -127,10 +127,27 @@ MC_DROPOUT_SUBSTITUTES = {
 class DropoutUtils():
     @classmethod
     def add_new_dropout_layers(
-      cls, model:torch.nn.Module, layer_name_to_replace='Linear', MLP_layer_names=['LlamaMLP', 'MistralMLP', 'MixtralBlockSparseTop2MLP', 'GemmaMLP', 'FalconMLP'], verbose=False
+      cls, model:torch.nn.Module, layer_name_to_replace='Linear', verbose=False, MLP_layer_names=[],
     ):
+        if not (isinstance(MLP_layer_names, list) and all(isinstance(item, str) for item in MLP_layer_names)):
+            raise ValueError('MLP_layer_names must be a list of strings')
+            
+        KNOWN_MLP_LAYER_NAMES = [
+            'ApertusMLP',
+            'FalconMLP',
+            'GemmaMLP',
+            'Gemma2MLP',
+            'Gemma3MLP',
+            'GptOssMLP',
+            'GPTNeoXMLP',
+            'LlamaMLP',
+            'Llama4TextMLP',
+            'MixtralBlockSparseTop2MLP',
+            'MistralMLP',
+        ] + MLP_layer_names
+
         for child in model.children():
-          if child._get_name() in MLP_layer_names:
+          if child._get_name() in KNOWN_MLP_LAYER_NAMES:
             for name, subchild in reversed([(name, item) for name, item in child.named_children()]):
               if subchild._get_name() in layer_name_to_replace:
                 new = torch.nn.Sequential(subchild, torch.nn.Dropout(p=0,))
@@ -142,8 +159,8 @@ class DropoutUtils():
               if verbose:
                 print('layer: ', child._get_name(), 'dropout added')
           else:
-            cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, MLP_layer_names=MLP_layer_names, verbose=verbose)
-  
+            cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, verbose=verbose)
+
     @classmethod
     def show_model(
         cls, model: torch.nn.Module,
