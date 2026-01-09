@@ -239,7 +239,7 @@ class DropoutUtils():
                 layer.identity = identity[name]
 
     @classmethod
-    def convert_dropouts(cls, model, stratified=True):
+    def convert_dropouts(cls, model, stratified=True, verbose=False):
       #if stratified is true then the model will not change dropouts between generations
       if stratified:
         dropout_ctor = lambda p, activate: StratifiedDropoutMC(
@@ -264,10 +264,11 @@ class DropoutUtils():
         print('trying to add dropout layers...')
         cls.add_new_dropout_layers(model)
         replaced_layers = cls._convert_to_mc_dropout(model, replacement_dict)
-      
-      cls.show_model(model)
-      print('replaced ', replaced_layers, ' layers.')
-      
+
+      if verbose:
+        cls.show_model(model)
+        print('replaced ', replaced_layers, ' layers.')
+
 
       if replaced_layers==0:
         raise ValueError("The number of converted layers is zero. This is because the model has no dropout layers. Add them using add_new_dropout_layers()")
