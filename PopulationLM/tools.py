@@ -302,3 +302,8 @@ def call_function_with_population(model, identities, function_to_call):
     yield function_to_call()
 
 
+def generate_population_and_apply(model, function_to_call, committee_size = 20, transpose = False):
+    outs = list(call_function_with_population(model, generate_dropout_population(model, function_to_call, committee_size), function_to_call))
+    if transpose and isinstance(outs[0], list):
+        outs = list(map(list, zip(*outs)))
+    return outs
