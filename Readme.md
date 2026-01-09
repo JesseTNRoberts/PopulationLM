@@ -50,3 +50,37 @@ for out in outs:
 [-0.9286928176879883, -1.8288569450378418, -7.252242088317871]
 [-0.8429360389709473, -0.9319925308227539, -7.50780725479126]
 ```
+
+## Example - Running from a Local Server
+
+1. Setting up Python Virtual Environment
+```shell
+# for python3.10+
+# for Unix or MacOS:
+python -m venv venv
+source venv/bin/activate
+
+# for Windows:
+python -m venv venv
+venv\Scripts\activate
+```
+
+2. Installing Dependencies
+```shell
+# Install dependencies using pip:
+pip install transformers sentencepiece torch torchvision torchaudio minicons
+
+# Alternatively, if you prefer to avoid version mismatches:
+pip install -r requirements.txt
+```
+
+3.Loading Models (for users in China)
+```shell
+# If you are in China and face issues with automatic model loading from Hugging Face, download models using:
+HF_ENDPOINT=https://hf-mirror.com huggingface-cli download --resume-download distilbert/distilbert-base-uncased --local-dir /models/distilbert-base-uncased
+```
+
+4. Run PopulationLM
+```shell
+python  Example_without_minicons.py
+```
