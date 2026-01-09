@@ -2,11 +2,11 @@
 Adapted and Extended from:
 
 @inproceedings{shelmanov2021certain,
-  title={How certain is your Transformer?},
-  author={Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim},
-  booktitle={Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume},
-  pages={1833--1840},
-  year={2021}
+    title={How certain is your Transformer?},
+    author={Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim},
+    booktitle={Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume},
+    pages={1833--1840},
+    year={2021}
 }
 """
 
@@ -51,17 +51,17 @@ class StratifiedDropoutMC(DropoutMC):
         x = x.clone()
 
         if self.identity is None:
-          size = list(x.size())
-          # create mask of appropriate size and broadcast it to the 
-          if not self.batch_first:
-            # traditionally, the sequence length was the first element.
-            size[0] = 1
-            m = x.data.new(torch.Size(size)).bernoulli_(1 - self.p)
-          else:
-            # if batch is the first element then the second element is the sequence length.
-            size[1] = 1
-            m = x.data.new(torch.Size(size)).bernoulli_(1 - self.p)
-          self.identity = m.div_(1 - self.p)
+            size = list(x.size())
+            # create mask of appropriate size and broadcast it to the 
+            if not self.batch_first:
+                # traditionally, the sequence length was the first element.
+                size[0] = 1
+                m = x.data.new(torch.Size(size)).bernoulli_(1 - self.p)
+            else:
+                # if batch is the first element then the second element is the sequence length.
+                size[1] = 1
+                m = x.data.new(torch.Size(size)).bernoulli_(1 - self.p)
+            self.identity = m.div_(1 - self.p)
         
         identity_expanded = self.identity.expand_as(x)
 
@@ -147,19 +147,19 @@ class DropoutUtils():
         ] + MLP_layer_names
 
         for child in model.children():
-          if child._get_name() in KNOWN_MLP_LAYER_NAMES:
-            for name, subchild in reversed([(name, item) for name, item in child.named_children()]):
-              if subchild._get_name() in layer_name_to_replace:
-                new = torch.nn.Sequential(subchild, torch.nn.Dropout(p=0,))
-                setattr(child, name, new)
+            if child._get_name() in KNOWN_MLP_LAYER_NAMES:
+                for name, subchild in reversed([(name, item) for name, item in child.named_children()]):
+                    if subchild._get_name() in layer_name_to_replace:
+                        new = torch.nn.Sequential(subchild, torch.nn.Dropout(p=0,))
+                        setattr(child, name, new)
 
-                # Only add one dropout layer to each MLP
-                break
-                
-              if verbose:
-                print('layer: ', child._get_name(), 'dropout added')
-          else:
-            cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, verbose=verbose)
+                        # Only add one dropout layer to each MLP
+                        break
+                        
+                    if verbose:
+                        print('layer: ', child._get_name(), 'dropout added')
+            else:
+                cls.add_new_dropout_layers(child, layer_name_to_replace=layer_name_to_replace, verbose=verbose)
 
     @classmethod
     def show_model(
@@ -240,66 +240,66 @@ class DropoutUtils():
 
     @classmethod
     def convert_dropouts(cls, model, stratified=True, verbose=False):
-      #if stratified is true then the model will not change dropouts between generations
-      if stratified:
-        dropout_ctor = lambda p, activate: StratifiedDropoutMC(
-                  p=0.1, activate=False
-              )
-      else:
-        dropout_ctor = lambda p, activate: DropoutMC(
-                  p=0.1, activate=False
-              )
+        #if stratified is true then the model will not change dropouts between generations
+        if stratified:
+            dropout_ctor = lambda p, activate: StratifiedDropoutMC(
+                    p=0.1, activate=False
+                )
+        else:
+            dropout_ctor = lambda p, activate: DropoutMC(
+                    p=0.1, activate=False
+                )
         
-      # the names of the default dropout methods need to be in the following dictionary.
-      # each string name of a dropout method is a key paired with an associated lambda function replacement.
-      replacement_dict = {
-          "Dropout": dropout_ctor,
-          }
+        # the names of the default dropout methods need to be in the following dictionary.
+        # each string name of a dropout method is a key paired with an associated lambda function replacement.
+        replacement_dict = {
+                    "Dropout": dropout_ctor,
+                }
 
-      # call the conversion method on the model
-      replaced_layers = cls._convert_to_mc_dropout(model, replacement_dict)
-
-      
-      if replaced_layers == 0:
-        print('trying to add dropout layers...')
-        cls.add_new_dropout_layers(model)
+        # call the conversion method on the model
         replaced_layers = cls._convert_to_mc_dropout(model, replacement_dict)
 
-      if verbose:
-        cls.show_model(model)
-        print('replaced ', replaced_layers, ' layers.')
+        
+        if replaced_layers == 0:
+            print('trying to add dropout layers...')
+            cls.add_new_dropout_layers(model)
+            replaced_layers = cls._convert_to_mc_dropout(model, replacement_dict)
+
+        if verbose:
+            cls.show_model(model)
+            print('replaced ', replaced_layers, ' layers.')
 
 
-      if replaced_layers==0:
-        raise ValueError("The number of converted layers is zero. This is because the model has no dropout layers. Add them using add_new_dropout_layers()")
+        if replaced_layers==0:
+            raise ValueError("The number of converted layers is zero. This is because the model has no dropout layers. Add them using add_new_dropout_layers()")
       
       
 
 def generate_dropout_population(model, call_to_model_lambda, committee_size = 20):
-  identities = []
-  DropoutUtils.reset_stratified_mc_dropout(model)
-  call_to_model_lambda()
-  
-  probs, initial_identity = DropoutUtils.get_stratified_dropout_identity(model)
-  identities.append(initial_identity)
-
-  for index in range(committee_size-1):
-    new_identity = {}
-
-    for layer in initial_identity.keys():
-      p = probs[layer]
-      tens = initial_identity[layer]
-      new = tens.data.new(torch.Size(tens.shape)).bernoulli_(1 - p).div_(1 - p)
-      new_identity[layer] = new
-
-    identities.append(new_identity)
+    identities = []
+    DropoutUtils.reset_stratified_mc_dropout(model)
+    call_to_model_lambda()
     
-  return identities
+    probs, initial_identity = DropoutUtils.get_stratified_dropout_identity(model)
+    identities.append(initial_identity)
+
+    for index in range(committee_size-1):
+        new_identity = {}
+
+        for layer in initial_identity.keys():
+            p = probs[layer]
+            tens = initial_identity[layer]
+            new = tens.data.new(torch.Size(tens.shape)).bernoulli_(1 - p).div_(1 - p)
+            new_identity[layer] = new
+
+        identities.append(new_identity)
+        
+    return identities
 
 def call_function_with_population(model, identities, function_to_call):
-  for identity in identities:
-    DropoutUtils.set_stratified_dropout_identity(model,identity)
-    yield function_to_call()
+    for identity in identities:
+        DropoutUtils.set_stratified_dropout_identity(model,identity)
+        yield function_to_call()
 
 
 def generate_population_and_apply(model, function_to_call, committee_size = 20, transpose = False):
