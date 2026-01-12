@@ -1,23 +1,3 @@
-"""
-Adapted and Extended from:
-
-@inproceedings{shelmanov2021certain,
-    title={How certain is your Transformer?},
-    author={Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim},
-    booktitle={Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume},
-    pages={1833--1840},
-    year={2021}
-}
-"""
-
-
-import torch
-from torch.nn import Identity
-from collections import Counter
-from typing import Iterable, Union, Dict
-from functools import partial
-
-
 class DropoutMC(torch.nn.Module):
     def __init__(self, p: float, activate=False):
         super().__init__()
@@ -170,7 +150,9 @@ class DropoutUtils():
   
     @classmethod
     def _convert_to_mc_dropout(
-        cls, model: torch.nn.Module, substitution_dict: Dict[str, torch.nn.Module] = None
+        cls, model: torch.nn.Module,
+        substitution_dict: Dict[str, torch.nn.Module] = None,
+        ignore_module_list: Iterable[str] = ['attn_dropout', 'attention'],
     ):
         layer_replaced_count= 0
       
@@ -178,7 +160,9 @@ class DropoutUtils():
             proba_field_name = "dropout_rate" if "flair" in str(type(layer)) else "p"
             module_name = list(model._modules.items())[i][0]
             layer_name = layer._get_name()
-            if layer_name in substitution_dict.keys():
+            if module_name in ignore_module_list:
+                continue
+            elif layer_name in substitution_dict.keys():
                 model._modules[module_name] = substitution_dict[layer_name](
                     p=getattr(layer, proba_field_name), activate=False
                 )
@@ -288,6 +272,7 @@ def generate_dropout_population(model, call_to_model_lambda, committee_size = 20
 
         for layer in initial_identity.keys():
             p = probs[layer]
+
             tens = initial_identity[layer]
             new = tens.data.new(torch.Size(tens.shape)).bernoulli_(1 - p).div_(1 - p)
             new_identity[layer] = new
