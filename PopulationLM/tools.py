@@ -1,3 +1,23 @@
+"""
+Adapted and Extended from:
+
+@inproceedings{shelmanov2021certain,
+    title={How certain is your Transformer?},
+    author={Shelmanov, Artem and Tsymbalov, Evgenii and Puzyrev, Dmitri and Fedyanin, Kirill and Panchenko, Alexander and Panov, Maxim},
+    booktitle={Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume},
+    pages={1833--1840},
+    year={2021}
+}
+"""
+
+
+import torch
+from torch.nn import Identity
+from collections import Counter
+from typing import Iterable, Union, Dict
+from functools import partial
+
+
 class DropoutMC(torch.nn.Module):
     def __init__(self, p: float, activate=False):
         super().__init__()
