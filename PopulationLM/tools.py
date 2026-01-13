@@ -127,11 +127,15 @@ MC_DROPOUT_SUBSTITUTES = {
 class DropoutUtils():
     @classmethod
     def add_new_dropout_layers(
-      cls, model:torch.nn.Module, layer_name_to_replace='Linear', verbose=False, MLP_layer_names=[],
+      cls, model:torch.nn.Module, layer_name_to_replace=None, verbose=False, MLP_layer_names=[],
     ):
         if not (isinstance(MLP_layer_names, list) and all(isinstance(item, str) for item in MLP_layer_names)):
             raise ValueError('MLP_layer_names must be a list of strings')
-            
+
+        if layer_name_to_replace is None:
+            layer_name_to_replace = ['Linear',
+                                     'FalconLinear']
+
         KNOWN_MLP_LAYER_NAMES = [
             'ApertusMLP',
             'FalconMLP',
